@@ -1,34 +1,40 @@
 # Classificador Inteligente de Chamados de Suporte Técnico
 
-Versão básica de uma aplicação acadêmica em Python que recebe, pelo terminal,
-a descrição de um problema de informática e usa a API da OpenAI para sugerir:
+Versão intermediária de um projeto acadêmico em Python. A aplicação recebe
+uma descrição pelo terminal e usa a API da OpenAI para sugerir uma categoria,
+uma prioridade e um resumo curto.
 
-- uma categoria: Hardware, Software, Redes, Impressoras ou Acesso e contas;
-- uma prioridade: Baixa, Média ou Alta;
-- um resumo do problema com até 30 palavras.
+## O que a aplicação retorna
 
-O modelo é instruído a usar apenas as informações fornecidas pelo usuário e a
-não inventar detalhes.
+- Categoria: Hardware, Software, Redes, Impressoras ou Acesso e contas;
+- Prioridade sugerida: Baixa, Média ou Alta;
+- Resumo do problema: até 30 palavras.
 
-## Estrutura do projeto
+O modelo recebe a instrução de usar somente o conteúdo informado pelo usuário.
+A aplicação confere se a resposta não está vazia e se contém os campos,
+valores e limite de palavras esperados.
+
+## Arquivos
 
 ```text
 .
 |-- main.py
+|-- test_main.py
 |-- requirements.txt
 |-- .env.example
 |-- .gitignore
 `-- README.md
 ```
 
-## Pré-requisitos
+## Requisitos
 
-- Python instalado no Windows;
-- uma chave da API da OpenAI;
-- créditos ou faturamento habilitado na conta da API, quando necessário.
+- Python 3.10 ou superior;
+- uma chave da API da OpenAI com acesso ao modelo configurado;
+- créditos ou faturamento habilitado na organização da API para executar uma
+  chamada real.
 
-O uso da API é separado de uma assinatura do ChatGPT e pode gerar cobrança de
-acordo com o modelo e a quantidade de tokens utilizados.
+A assinatura do ChatGPT Plus não paga chamadas feitas pela API. O uso da API é
+faturado separadamente e depende da conta, modelo e tokens utilizados.
 
 ## Instalação no Windows
 
@@ -38,13 +44,13 @@ Abra o terminal do VS Code na pasta do projeto e crie um ambiente virtual:
 python -m venv .venv
 ```
 
-Ative o ambiente virtual no PowerShell:
+Ative-o no PowerShell:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-Se estiver usando o Prompt de Comando (cmd), utilize:
+No Prompt de Comando (cmd), use:
 
 ```cmd
 .venv\Scripts\activate.bat
@@ -56,88 +62,100 @@ Instale as dependências:
 python -m pip install -r requirements.txt
 ```
 
-## Configuração da chave da API
+## Configuração da API
 
-1. Crie sua própria chave em <https://platform.openai.com/api-keys>.
-2. Copie o arquivo de exemplo para um novo arquivo chamado `.env`:
+1. Crie uma chave em <https://platform.openai.com/api-keys>.
+2. Copie o arquivo de exemplo para criar o arquivo local `.env`:
 
-```powershell
-Copy-Item .env.example .env
-```
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-3. Abra o `.env` e substitua o valor de exemplo pela sua chave real:
+3. Edite `.env` e substitua o valor de exemplo pela sua chave:
 
-```env
-OPENAI_API_KEY=sua_chave_real_aqui
-```
+   ```env
+   OPENAI_API_KEY=sua_chave_real_aqui
+   ```
 
-O arquivo `.env` está listado no `.gitignore` e não deve ser enviado ao GitHub.
-O arquivo `.env.example` contém apenas um valor fictício e pode ser versionado.
+O programa carrega essa variável com `python-dotenv`. A chave não é mostrada
+nas mensagens de erro. O `.gitignore` exclui `.env` e suas variantes, mas
+permite versionar `.env.example`. Nunca publique uma chave real.
 
-## Modelo utilizado
+O modelo está definido pela constante `MODELO` no início de `main.py` e pode
+ser trocado por outro modelo de texto acessível à organização da API. Esta
+versão mantém essa escolha no código; configuração externa é uma evolução do
+nível avançado.
 
-O modelo está definido na constante `MODELO`, no início do `main.py`:
+## Execução real
 
-```python
-MODELO = "gpt-5.4-mini"
-```
-
-Esse modelo aceita texto pela Responses API e é adequado para a classificação
-solicitada. A disponibilidade depende da conta da API. Se a conta não tiver
-acesso a ele, altere somente o valor da constante para outro modelo de texto
-disponível na sua conta. Consulte a lista atual em
-<https://developers.openai.com/api/docs/models>.
-
-## Execução
-
-Com o ambiente virtual ativado e o `.env` configurado, execute:
+Com o ambiente virtual ativo e a chave configurada:
 
 ```powershell
 python main.py
 ```
 
-Digite a descrição quando o programa solicitar. Exemplo:
+Exemplo de entrada:
 
 ```text
-Descreva o problema de informática: Não consigo entrar no e-mail porque minha senha foi bloqueada.
+Descreva o problema de informática: Não consigo acessar o e-mail porque minha senha foi bloqueada.
+```
 
+Exemplo de saída possível:
+
+```text
 Classificação do chamado:
 Categoria: Acesso e contas
 Prioridade sugerida: Média
 Resumo do problema: Usuário não consegue acessar o e-mail porque a senha está bloqueada.
 ```
 
-A classificação pode variar, pois é produzida por um modelo de linguagem.
+A saída pode variar. Uma execução real envia a descrição à API e pode consumir
+créditos. Se a conta estiver sem saldo, o programa explica que é necessário
+conferir o faturamento.
 
-## Como o código funciona
+## Testes simulados
 
-1. `load_dotenv()` carrega as variáveis do arquivo `.env` para o ambiente do
-   programa.
-2. `OpenAI()` cria o cliente oficial. O SDK lê automaticamente a variável
-   `OPENAI_API_KEY`.
-3. `input()` recebe a descrição digitada no terminal.
-4. `cliente.responses.create(...)` envia as instruções e a descrição ao modelo.
-5. `resposta.output_text` contém o texto retornado e é exibido no terminal.
+Execute os testes automatizados com:
 
-As instruções separam claramente as opções permitidas, o formato esperado e a
-regra de não inventar informações. Nesta versão básica, o retorno é texto
-simples: validações, tratamento específico de erros, logs, configuração externa
-do modelo e testes serão evoluções posteriores do projeto.
+```powershell
+python -m unittest -v
+```
+
+Os testes usam `unittest.mock` para simular respostas e erros. Eles cobrem
+entrada vazia, configuração sem credencial, credencial inválida, timeout,
+falha de conexão, modelo não encontrado, saldo esgotado e respostas vazias ou
+fora do formato. **Não fazem chamadas reais à API, não precisam de uma chave
+válida e não consomem créditos.**
+
+Para demonstrar uma credencial ausente ou inválida com os testes simulados,
+rode o comando acima. Para testar o fluxo real do serviço, configure uma chave
+válida e saldo disponível e rode `python main.py`. Os dois tipos de execução
+validam coisas diferentes.
+
+## Como o código está organizado
+
+- `capturar_entrada()` lê e rejeita descrições vazias;
+- `carregar_configuracao()` carrega e verifica se a chave local foi informada;
+- `preparar_solicitacao()` monta os parâmetros enviados ao modelo;
+- `chamar_modelo()` faz a chamada pelo SDK oficial;
+- `tratar_resposta()` rejeita saída vazia, campos ou valores inválidos e resumo
+  acima de 30 palavras;
+- `apresentar_resultado()` imprime a classificação;
+- `mensagem_de_erro()` converte falhas previsíveis em mensagens compreensíveis.
+
+Erros de autenticação, timeout, conexão, modelo ou permissões e respostas da
+API são tratados separadamente. Quando a conta não tem créditos, o programa
+orienta conferir faturamento. A indisponibilidade do serviço ou a recuperação
+da infraestrutura depende do provedor ou da equipe que a administra.
 
 ## Dependências
 
-- `openai`: SDK oficial para acessar a API da OpenAI;
-- `python-dotenv`: carrega a chave armazenada localmente no arquivo `.env`.
-
-## Segurança
-
-- nunca escreva a chave diretamente no `main.py`;
-- nunca publique o arquivo `.env`;
-- antes de qualquer commit, confira os arquivos com `git status`;
-- se uma chave for exposta, revogue-a no painel da OpenAI e crie outra.
+- `openai`: SDK oficial da API da OpenAI;
+- `python-dotenv`: carrega `OPENAI_API_KEY` do arquivo `.env`.
 
 ## Referências oficiais
 
-- SDKs da OpenAI: <https://developers.openai.com/api/docs/libraries>
-- Modelos disponíveis: <https://developers.openai.com/api/docs/models>
-- Chaves da API: <https://platform.openai.com/api-keys>
+- [SDKs da OpenAI](https://developers.openai.com/api/docs/libraries)
+- [Erros da API](https://developers.openai.com/api/docs/guides/error-codes)
+- [Modelos disponíveis](https://developers.openai.com/api/docs/models)
+- [Chaves da API](https://platform.openai.com/api-keys)
