@@ -74,8 +74,36 @@ class TestTratamentoDeResposta(unittest.TestCase):
         with self.assertRaises(main.ErroResposta):
             main.tratar_resposta(resposta)
 
+    def test_rejeita_resumo_com_mais_de_30_palavras(self):
+        resumo = " ".join(["palavra"] * 31)
+        resposta = SimpleNamespace(
+            output_text=(
+                "Categoria: Software\n"
+                "Prioridade sugerida: Baixa\n"
+                f"Resumo do problema: {resumo}"
+            )
+        )
+        with self.assertRaisesRegex(main.ErroResposta, "mais de 30 palavras"):
+            main.tratar_resposta(resposta)
+
 
 class TestErrosDeIntegracaoSimulada(unittest.TestCase):
+    def test_credencial_ausente_encerra_sem_tentar_criar_cliente(self):
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("main.load_dotenv"),
+            patch("builtins.input", return_value="Meu computador não liga."),
+            patch("main.OpenAI") as cliente,
+            patch("sys.stderr") as stderr,
+        ):
+            codigo_saida = main.main()
+
+        self.assertEqual(codigo_saida, 1)
+        mensagem = "".join(chamada.args[0] for chamada in stderr.write.call_args_list)
+        self.assertIn("não foi configurada", mensagem)
+        self.assertNotIn("Traceback", mensagem)
+        cliente.assert_not_called()
+
     def test_credencial_invalida_mostra_mensagem_segura(self):
         erro = criar_erro_api(openai.AuthenticationError, 401)
         cliente = Mock()
